@@ -166,10 +166,26 @@ main (int argc, char *argv[])
   gchar *version_str;
   GList *uri_list;
   GOptionContext *context;
+  gchar *data_dir;
 
 #ifdef ENABLE_DBUS
   SnappyMP *mp_obj = NULL;
 #endif
+
+
+  /* Try to find the path for our resources in case snappy was relocated */
+  data_dir = g_strdup(SNAPPY_DATA_DIR);
+  if (!g_file_test(data_dir, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR)) {
+    gchar *root_dir;
+
+#ifdef G_OS_WIN32
+    root_dir = g_win32_get_package_installation_directory_of_module(NULL);
+#else
+    root_dir = g_build_filename(argv[0], "..", NULL);
+#endif
+    data_dir = g_build_filename(root_dir, "share", "snappy", NULL);
+    g_free(root_dir);
+  }
 
   if (!g_thread_supported ())
     g_thread_init (NULL);
@@ -189,6 +205,7 @@ main (int argc, char *argv[])
   ui->fullscreen = fullscreen;
   ui->hide = hide;
   ui->tags = tags;
+  ui->data_dir = data_dir;
   interface_init (ui);
   video_texture = clutter_texture_new ();
 
